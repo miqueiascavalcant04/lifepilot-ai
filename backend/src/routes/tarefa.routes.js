@@ -2,18 +2,18 @@ const express = require('express');
 const router = express.Router();
 
 const authMiddleware = require('../middlewares/auth.middleware');
+const tarefaController = require('../controllers/tarefa.controller');
+
+router.post(
+    '/',
+    authMiddleware,
+    tarefaController.criarTarefa
+);
 
 router.get(
     '/',
     authMiddleware,
-    (req, res) => {
-
-        res.json({
-            mensagem: 'Usuário autenticado',
-            usuario: req.usuario
-        });
-
-    }
+    tarefaController.listarTarefas
 );
 
 module.exports = router;
