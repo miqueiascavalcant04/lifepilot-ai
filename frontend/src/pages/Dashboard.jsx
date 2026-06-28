@@ -4,6 +4,11 @@ import api from '../services/api';
 
 export default function Dashboard() {
     const [tarefas, setTarefas] = useState([]);
+
+    const [titulo, setTitulo] = useState('');
+    const [descricao, setDescricao] = useState('');
+    const [prioridade, setPrioridade] = useState('MEDIA');
+
     const navigate = useNavigate();
 
     async function carregarTarefas() {
@@ -21,6 +26,38 @@ export default function Dashboard() {
         } catch (error) {
             console.error(error);
             alert('Erro ao carregar tarefas');
+        }
+    }
+
+    async function criarTarefa(e) {
+        e.preventDefault();
+
+        try {
+            const token = localStorage.getItem('token');
+
+            await api.post(
+                '/tarefas',
+                {
+                    titulo,
+                    descricao,
+                    prioridade
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            setTitulo('');
+            setDescricao('');
+            setPrioridade('MEDIA');
+
+            carregarTarefas();
+
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao criar tarefa');
         }
     }
 
@@ -43,6 +80,50 @@ export default function Dashboard() {
 
             <hr />
 
+            <h2>Nova tarefa</h2>
+
+            <form onSubmit={criarTarefa}>
+                <div>
+                    <input
+                        type="text"
+                        placeholder="Título"
+                        value={titulo}
+                        onChange={(e) => setTitulo(e.target.value)}
+                    />
+                </div>
+
+                <br />
+
+                <div>
+                    <textarea
+                        placeholder="Descrição"
+                        value={descricao}
+                        onChange={(e) => setDescricao(e.target.value)}
+                    />
+                </div>
+
+                <br />
+
+                <div>
+                    <select
+                        value={prioridade}
+                        onChange={(e) => setPrioridade(e.target.value)}
+                    >
+                        <option value="ALTA">Alta</option>
+                        <option value="MEDIA">Média</option>
+                        <option value="BAIXA">Baixa</option>
+                    </select>
+                </div>
+
+                <br />
+
+                <button type="submit">
+                    Criar tarefa
+                </button>
+            </form>
+
+            <hr />
+
             <h2>Minhas tarefas</h2>
 
             {tarefas.length === 0 ? (
@@ -58,8 +139,13 @@ export default function Dashboard() {
                         }}
                     >
                         <h3>{tarefa.titulo}</h3>
+
                         <p>{tarefa.descricao}</p>
-                        <p>Prioridade: {tarefa.prioridade}</p>
+
+                        <p>
+                            Prioridade: {tarefa.prioridade}
+                        </p>
+
                         <p>
                             Status:
                             {tarefa.concluida
