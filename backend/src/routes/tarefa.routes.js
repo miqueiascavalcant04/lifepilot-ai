@@ -16,4 +16,16 @@ router.get(
     tarefaController.listarTarefas
 );
 
+router.put(
+    '/:id',
+    authMiddleware,
+    tarefaController.atualizarTarefa
+);
+
+router.delete(
+    '/:id',
+    authMiddleware,
+    tarefaController.deletarTarefa
+);
+
 module.exports = router;

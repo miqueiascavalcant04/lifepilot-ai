@@ -46,7 +46,82 @@ const listarTarefas = async (req, res) => {
     }
 };
 
+const atualizarTarefa = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const tarefa = await prisma.tarefa.findUnique({
+            where: { id }
+        });
+
+        if (!tarefa) {
+            return res.status(404).json({
+                erro: 'Tarefa não encontrada'
+            });
+        }
+
+        if (tarefa.usuarioId !== req.usuario.id) {
+            return res.status(403).json({
+                erro: 'Acesso negado'
+            });
+        }
+
+        const tarefaAtualizada = await prisma.tarefa.update({
+            where: { id },
+            data: req.body
+        });
+
+        return res.json(tarefaAtualizada);
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            erro: 'Erro ao atualizar tarefa'
+        });
+    }
+};
+
+const deletarTarefa = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const tarefa = await prisma.tarefa.findUnique({
+            where: { id }
+        });
+
+        if (!tarefa) {
+            return res.status(404).json({
+                erro: 'Tarefa não encontrada'
+            });
+        }
+
+        if (tarefa.usuarioId !== req.usuario.id) {
+            return res.status(403).json({
+                erro: 'Acesso negado'
+            });
+        }
+
+        await prisma.tarefa.delete({
+            where: { id }
+        });
+
+        return res.json({
+            mensagem: 'Tarefa removida com sucesso'
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            erro: 'Erro ao remover tarefa'
+        });
+    }
+};
+
 module.exports = {
     criarTarefa,
-    listarTarefas
+    listarTarefas,
+    atualizarTarefa,
+    deletarTarefa
 };
