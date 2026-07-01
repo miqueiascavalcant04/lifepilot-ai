@@ -1,19 +1,23 @@
-const express = require('express');
-const cors = require('cors');
+import express from 'express';
+import authRoutes from './routes/auth.routes.js';
+import tarefaRoutes from './routes/tarefa.routes.js';
+import iaRoutes from './routes/ia.routes.js';
+import cors from 'cors';
 
 const app = express();
 
-app.use(cors());
 app.use(express.json());
 
-const authRoutes = require('./routes/auth.routes');
-const tarefaRoutes = require('./routes/tarefa.routes');
-
+app.use(cors());
 app.use('/auth', authRoutes);
 app.use('/tarefas', tarefaRoutes);
+app.use('/ia', iaRoutes);
+app.use(express.json());
 
 app.get('/', (req, res) => {
-    res.json({ message: 'LifePilot AI rodando 🚀' });
+    res.json({
+        mensagem: 'LifePilot AI rodando 🚀'
+    });
 });
 
 const PORT = 3000;

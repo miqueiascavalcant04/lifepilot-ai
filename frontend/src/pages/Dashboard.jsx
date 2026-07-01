@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import './Dashboard.css';
 
 export default function Dashboard() {
     const [tarefas, setTarefas] = useState([]);
-
     const [titulo, setTitulo] = useState('');
     const [descricao, setDescricao] = useState('');
     const [prioridade, setPrioridade] = useState('MEDIA');
+    const [respostaIA, setRespostaIA] = useState('');
 
     const navigate = useNavigate();
+
+    const total = tarefas.length;
+    const concluidas = tarefas.filter(t => t.concluida).length;
+    const pendentes = tarefas.filter(t => !t.concluida).length;
 
     async function carregarTarefas() {
         try {
@@ -61,6 +66,72 @@ export default function Dashboard() {
         }
     }
 
+    async function concluirTarefa(tarefa) {
+        try {
+            const token = localStorage.getItem('token');
+
+            await api.put(
+                `/tarefas/${tarefa.id}`,
+                {
+                    concluida: !tarefa.concluida
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            carregarTarefas();
+
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao atualizar tarefa');
+        }
+    }
+
+    async function deletarTarefa(id) {
+        try {
+            const token = localStorage.getItem('token');
+
+            await api.delete(`/tarefas/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            carregarTarefas();
+
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao excluir tarefa');
+        }
+    }
+
+    async function gerarPlanoIA() {
+        try {
+            const token = localStorage.getItem('token');
+
+            const response = await api.post(
+                '/ia/analisar',
+                {
+                    tarefas
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            setRespostaIA(response.data.resposta);
+
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao gerar plano');
+        }
+    }
+
     function logout() {
         localStorage.removeItem('token');
         navigate('/');
@@ -71,40 +142,80 @@ export default function Dashboard() {
     }, []);
 
     return (
-        <div style={{ padding: '30px' }}>
-            <h1>Dashboard LifePilot 🚀</h1>
+        <div className="dashboard">
 
-            <button onClick={logout}>
-                Sair
+            <div className="header">
+                <h1>🚀 LifePilot AI</h1>
+
+                <button
+                    className="logout-btn"
+                    onClick={logout}
+                >
+                    Sair
+                </button>
+            </div>
+
+            <div className="cards">
+
+                <div className="card">
+                    <h3>Total</h3>
+                    <h1>{total}</h1>
+                </div>
+
+                <div className="card">
+                    <h3>Concluídas</h3>
+                    <h1>{concluidas}</h1>
+                </div>
+
+                <div className="card">
+                    <h3>Pendentes</h3>
+                    <h1>{pendentes}</h1>
+                </div>
+
+            </div>
+
+            <button
+                className="create-btn"
+                onClick={gerarPlanoIA}
+                style={{ marginBottom: '20px' }}
+            >
+                🤖 Gerar plano do dia
             </button>
 
-            <hr />
+            {respostaIA && (
+                <div className="form-container">
+                    <h2>🤖 Assistente LifePilot</h2>
 
-            <h2>Nova tarefa</h2>
+                    <pre
+                        style={{
+                            whiteSpace: 'pre-wrap',
+                            fontFamily: 'inherit'
+                        }}
+                    >
+                        {respostaIA}
+                    </pre>
+                </div>
+            )}
 
-            <form onSubmit={criarTarefa}>
-                <div>
+            <div className="form-container">
+
+                <h2>Nova tarefa</h2>
+
+                <form onSubmit={criarTarefa}>
+
                     <input
                         type="text"
                         placeholder="Título"
                         value={titulo}
                         onChange={(e) => setTitulo(e.target.value)}
                     />
-                </div>
 
-                <br />
-
-                <div>
                     <textarea
                         placeholder="Descrição"
                         value={descricao}
                         onChange={(e) => setDescricao(e.target.value)}
                     />
-                </div>
 
-                <br />
-
-                <div>
                     <select
                         value={prioridade}
                         onChange={(e) => setPrioridade(e.target.value)}
@@ -113,16 +224,16 @@ export default function Dashboard() {
                         <option value="MEDIA">Média</option>
                         <option value="BAIXA">Baixa</option>
                     </select>
-                </div>
 
-                <br />
+                    <button
+                        className="create-btn"
+                        type="submit"
+                    >
+                        Criar tarefa
+                    </button>
 
-                <button type="submit">
-                    Criar tarefa
-                </button>
-            </form>
-
-            <hr />
+                </form>
+            </div>
 
             <h2>Minhas tarefas</h2>
 
@@ -132,29 +243,50 @@ export default function Dashboard() {
                 tarefas.map((tarefa) => (
                     <div
                         key={tarefa.id}
-                        style={{
-                            border: '1px solid gray',
-                            padding: '10px',
-                            marginBottom: '10px'
-                        }}
+                        className="tarefa"
                     >
                         <h3>{tarefa.titulo}</h3>
 
                         <p>{tarefa.descricao}</p>
 
                         <p>
-                            Prioridade: {tarefa.prioridade}
+                            <strong>Prioridade:</strong>
+
+                            <span
+                                className={`prioridade ${tarefa.prioridade.toLowerCase()}`}
+                            >
+                                {tarefa.prioridade}
+                            </span>
                         </p>
 
                         <p>
-                            Status:
+                            <strong>Status:</strong>{' '}
                             {tarefa.concluida
-                                ? ' ✅ Concluída'
-                                : ' ⏳ Pendente'}
+                                ? '✅ Concluída'
+                                : '⏳ Pendente'}
                         </p>
+
+                        <div className="tarefa-buttons">
+
+                            <button
+                                onClick={() => concluirTarefa(tarefa)}
+                            >
+                                {tarefa.concluida
+                                    ? '↩ Reabrir'
+                                    : '✓ Concluir'}
+                            </button>
+
+                            <button
+                                onClick={() => deletarTarefa(tarefa.id)}
+                            >
+                                🗑 Excluir
+                            </button>
+
+                        </div>
                     </div>
                 ))
             )}
+
         </div>
     );
 }
